@@ -35,12 +35,17 @@
         else ./home/hosts/default.nix;
 
     in {
+      
       homeConfigurations = {
         # 🧠 Universal, self-replicating config
         self = mkHome {
           inherit username homeDirectory system;
-          modules = [ ./home/common.nix hostModule ];
+          modules = [
+            ./home/common.nix
+            hostModule
+          ];
         };
       };
+
     };
 }
