@@ -1,0 +1,21 @@
+name: Flake Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check-flake:
+    name: nix flake check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🧪 Set up Nix
+        uses: cachix/install-nix-action@v25
+
+      - name: 🧬 Flake check
+        run: nix flake check
