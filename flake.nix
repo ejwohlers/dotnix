@@ -7,8 +7,10 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, system, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, ... }:
     let
+      system = builtins.currentSystem;
+
       # 🧙 Helper function to build a clean Home Manager config
       mkHome = import ./lib/mkHome.nix {
         inherit nixpkgs home-manager;
@@ -37,11 +39,7 @@
         # 🧠 Universal, self-replicating config
         self = mkHome {
           inherit username homeDirectory system;
-
-          modules = [
-            ./home/common.nix  # shared config
-            hostModule         # host-specific config
-          ];
+          modules = [ ./home/common.nix hostModule ];
         };
       };
     };
