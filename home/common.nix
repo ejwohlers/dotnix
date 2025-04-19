@@ -46,7 +46,6 @@
     curl
     pre-commit
     nixpkgs-fmt
-    nix-linter
     deadnix
     statix
 
