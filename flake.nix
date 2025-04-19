@@ -39,7 +39,7 @@
       homeConfigurations = {
         # 🧠 Universal, self-replicating config
         self = mkHome {
-          inherit username homeDirectory system;
+          inherit system;
           modules = [
             ./home/common.nix
             hostModule
