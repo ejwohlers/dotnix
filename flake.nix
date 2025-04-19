@@ -1,5 +1,5 @@
 {
-  description = "Reusable Home Manager config";
+  description = "Smart auto-detecting dotfiles";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -7,21 +7,37 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { nixpkgs, home-manager, ... }: {
-    homeConfigurations = {
-      picard = home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs { system = "x86_64-linux"; };
+  outputs = inputs@{ self, nixpkgs, home-manager, ... }:
+    let
+      mkHome = import ./lib/mkHome.nix { inherit nixpkgs home-manager; };
 
-        modules = [
-          ./home/common.nix
-          ./home/hosts/surfacepro.nix
-        ];
+      username = builtins.getEnv "USER";
+      homeDirectory = builtins.getEnv "HOME";
+      system = builtins.currentSystem;
 
-        # Name + Home folder
-        home.username = "picard";
-        home.homeDirectory = "/home/picard";
+      # 🔍 Detect hostname and try to load a host config file
+      hostname = builtins.getEnv "HOSTNAME";
+      hostModulePath =
+        if hostname != ""
+        then ./home/hosts/${hostname}.nix
+        else ./home/hosts/default.nix;
+
+      # 💥 fallback in case the file doesn't exist
+      hostModule =
+        if builtins.pathExists hostModulePath
+        then hostModulePath
+        else ./home/hosts/default.nix;
+
+    in {
+      homeConfigurations = {
+        self = mkHome {
+          inherit username homeDirectory system;
+
+          modules = [
+            ./home/common.nix
+            hostModule
+          ];
+        };
       };
     };
-  };
 }
-

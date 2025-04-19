@@ -1,0 +1,2 @@
+# home/hosts/picard.nix
+{ ... }: { }
