@@ -44,6 +44,7 @@
     zip
     wget
     curl
+    pip
 
     # ───── Eye Candy ─────
     lolcat
