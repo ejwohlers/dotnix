@@ -9,7 +9,7 @@
 
   outputs = inputs@{ self, nixpkgs, home-manager, ... }:
     let
-      system = builtins.currentSystem;
+      system = "x86_64-linux";  # or set manually per dev machine
 
       # 🧙 Helper function to build a clean Home Manager config
       mkHome = import ./lib/mkHome.nix {

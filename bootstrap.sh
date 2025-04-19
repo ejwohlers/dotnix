@@ -6,6 +6,8 @@ echo "🧪 Welcome to the dotfiles bootstrap wizard"
 echo "🌍 Hostname: $(hostname)"
 echo "👤 User: $USER"
 echo "🏠 Home: $HOME"
+echo "🖥️ Hostname: $(hostname)"
+echo "🧬 System: $SYSTEM"
 
 # 1. Install Nix if it's not already installed
 if ! command -v nix >/dev/null 2>&1; then
@@ -33,6 +35,15 @@ cd ~/.dotfiles
 
 # 4. Run Home Manager via flake
 echo "🚀 Activating home configuration..."
-nix run .#homeConfigurations.self.activationPackage
+
+SYSTEM=$(nix eval --impure --expr builtins.currentSystem --raw)
+
+nix run .#homeConfigurations.self.activationPackage \
+  --no-write-lock-file \
+  --impure \
+  --system "$SYSTEM"
+
+echo "🚀 Activating home configuration..."
+./activate.sh
 
 echo "✅ All done! Your system is now configured 🎉"
