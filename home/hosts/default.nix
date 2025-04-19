@@ -1,3 +1,1 @@
-{ ... }: {
-  # fallback config for unknown hosts
-}
+_: { }

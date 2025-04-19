@@ -9,7 +9,7 @@
 
   outputs = inputs@{ self, nixpkgs, home-manager, ... }:
     let
-      system = "x86_64-linux";  # or set manually per dev machine
+      system = "x86_64-linux"; # or set manually per dev machine
 
       # 🧙 Helper function to build a clean Home Manager config
       mkHome = import ./lib/mkHome.nix {
@@ -34,14 +34,16 @@
         then hostModulePath
         else ./home/hosts/default.nix;
 
-    in {
-      
+    in
+    {
+
       homeConfigurations = {
         # 🧠 Universal, self-replicating config
         self = mkHome {
           inherit system;
           modules = [
             ./home/common.nix
+            ./home/pre-commit.nix
             hostModule
           ];
         };

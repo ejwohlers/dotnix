@@ -1,9 +1,9 @@
 { config, pkgs, ... }: {
   home.packages = with pkgs; [
     # Productivity
-    rectangle     # window snapping
-    alt-tab       # alt-tab switcher like on Windows
-    stats         # menu bar stats app
+    rectangle # window snapping
+    alt-tab # alt-tab switcher like on Windows
+    stats # menu bar stats app
     monitorcontrol # control external display brightness
 
     # Dev

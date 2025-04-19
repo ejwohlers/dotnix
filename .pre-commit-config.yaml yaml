@@ -1,8 +1,0 @@
-repos:
-  - repo: https://github.com/cachix/pre-commit-hooks.nix
-    rev: v0.5.0
-    hooks:
-      - id: nixpkgs-fmt
-      - id: nix-linter
-      - id: deadnix
-      - id: statix

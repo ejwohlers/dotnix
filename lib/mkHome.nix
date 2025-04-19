@@ -1,8 +1,8 @@
 { nixpkgs, home-manager }:
 
-{ system, modules ? [] }:
+{ system, modules ? [ ] }:
 
 home-manager.lib.homeManagerConfiguration {
   pkgs = import nixpkgs { inherit system; };
-  modules = modules;
+  inherit modules;
 }
