@@ -44,7 +44,11 @@
     zip
     wget
     curl
-    pip
+    pre-commit
+    nixpkgs-fmt
+    nix-linter
+    deadnix
+    statix
 
     # ───── Eye Candy ─────
     lolcat

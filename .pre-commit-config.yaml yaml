@@ -4,3 +4,5 @@ repos:
     hooks:
       - id: nixpkgs-fmt
       - id: nix-linter
+      - id: deadnix
+      - id: statix
