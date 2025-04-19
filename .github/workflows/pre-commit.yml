@@ -1,0 +1,21 @@
+name: Pre-commit Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧾 Checkout repo
+        uses: actions/checkout@v3
+
+      - name: 🧪 Set up Nix
+        uses: cachix/install-nix-action@v25
+
+      - name: 🧠 Run pre-commit hooks
+        run: |
+          nix develop --command pre-commit run --all-files
