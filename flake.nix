@@ -1,5 +1,5 @@
 {
-  description = "Smart auto-detecting dotfiles";
+  description = "✨ Auto-detecting, cross-platform Home Manager flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -7,22 +7,26 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, nixpkgs, home-manager, ... }:
+  outputs = inputs@{ self, nixpkgs, home-manager, system, ... }:
     let
-      mkHome = import ./lib/mkHome.nix { inherit nixpkgs home-manager; };
+      # 🧙 Helper function to build a clean Home Manager config
+      mkHome = import ./lib/mkHome.nix {
+        inherit nixpkgs home-manager;
+      };
 
+      # 🌍 Auto-detect user + home
       username = builtins.getEnv "USER";
       homeDirectory = builtins.getEnv "HOME";
-      system = builtins.currentSystem;
 
-      # 🔍 Detect hostname and try to load a host config file
+      # 💻 Detect host by HOSTNAME env var
       hostname = builtins.getEnv "HOSTNAME";
+
+      # 📦 Try loading host-specific config, fallback to default
       hostModulePath =
         if hostname != ""
         then ./home/hosts/${hostname}.nix
         else ./home/hosts/default.nix;
 
-      # 💥 fallback in case the file doesn't exist
       hostModule =
         if builtins.pathExists hostModulePath
         then hostModulePath
@@ -30,12 +34,13 @@
 
     in {
       homeConfigurations = {
+        # 🧠 Universal, self-replicating config
         self = mkHome {
           inherit username homeDirectory system;
 
           modules = [
-            ./home/common.nix
-            hostModule
+            ./home/common.nix  # shared config
+            hostModule         # host-specific config
           ];
         };
       };
