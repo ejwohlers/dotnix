@@ -1,4 +1,6 @@
-{ config, pkgs, ... }: {
+{ config, pkgs, username, homeDirectory, hostname, ... }:
+
+{
   home.packages = with pkgs; [
     # Productivity
     rectangle # window snapping

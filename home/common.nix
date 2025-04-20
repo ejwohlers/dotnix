@@ -1,8 +1,7 @@
-{ config, pkgs, ... }:
+{ config, pkgs, username, homeDirectory, hostname, ... }:
 {
   home = {
-    username = builtins.getEnv "USER";
-    homeDirectory = builtins.getEnv "HOME";
+    inherit username homeDirectory;
     stateVersion = "23.11";
   };
 
