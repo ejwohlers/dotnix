@@ -19,16 +19,17 @@
         let
           vscodeShell = import ./modules/devshells/vscode.nix { inherit pkgs; };
           neovimApp = import ./modules/apps/neovim.nix { inherit pkgs; };
+          cliCorePkgs = import ./modules/cli-core.nix { inherit pkgs; };
         in
         {
           devShells = {
             default = pkgs.mkShell {
-              packages = with pkgs; [
+              packages = cliCorePkgs ++ (with pkgs; [
                 pre-commit
                 statix
                 deadnix
                 nixpkgs-fmt
-              ];
+              ]);
             };
 
             inherit (vscodeShell) vscode;
@@ -65,11 +66,26 @@
 
             pre-commit = pkgs.writeShellApplication {
               name = "pre-commit-check";
-              runtimeInputs = [ pkgs.pre-commit ];
+              runtimeInputs = cliCorePkgs ++ [ pkgs.pre-commit ];
               text = ''
                 pre-commit run --all-files
               '';
             };
+
+            build-home = pkgs.runCommand "check-home-build"
+              {
+                nativeBuildInputs = [
+                  inputs.home-manager.packages.${system}.home-manager
+                  pkgs.nix
+                ];
+              } ''
+              home-manager build \
+                --flake .#self \
+                --impure \
+                --option extra-experimental-features flakes
+              touch $out
+            '';
+
           };
         };
 
