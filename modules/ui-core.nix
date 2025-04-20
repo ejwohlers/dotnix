@@ -10,6 +10,6 @@ with pkgs; [
   wl-clipboard # Wayland clipboard
   fontconfig # font support
   noto-fonts-color-emoji # emoji fallback
-  nerdfonts.fira-code
-  nerdfonts.jetbrains-mono
+  nerd-fonts.fira-code
+  nerd-fonts.jetbrains-mono
 ]

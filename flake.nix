@@ -72,19 +72,20 @@
               '';
             };
 
-            build-home = pkgs.runCommand "check-home-build"
-              {
-                nativeBuildInputs = [
-                  inputs.home-manager.packages.${system}.home-manager
-                  pkgs.nix
+            home-self = (
+              inputs.home-manager.lib.homeManagerConfiguration {
+                pkgs = import nixpkgs { inherit system; };
+                modules = [
+                  ./home/common.nix
+                  ./home/hosts/default.nix
                 ];
-              } ''
-              home-manager build \
-                --flake .#self \
-                --impure \
-                --option extra-experimental-features flakes
-              touch $out
-            '';
+                extraSpecialArgs = {
+                  username = "nixos";
+                  homeDirectory = "/home/nixos";
+                  hostname = "default";
+                };
+              }
+            ).activationPackage;
 
           };
         };
