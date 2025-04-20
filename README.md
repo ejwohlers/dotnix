@@ -1,5 +1,8 @@
-# 🧙‍♂️ My Modular Nix Flake Setup
+# ✨ dotnix — My Modular Nix Dotfiles
 
+Welcome to `dotnix`, my personal Nix-powered setup for dotfiles, dev environments, system configuration, and terminal aesthetic goodness.
+
+It’s clean. It’s reproducible. And it vibes hard. 💻💚
 Welcome to my personal **dotfiles, dev environments, and system config** — powered entirely by [Nix](https://nixos.org/) and [flake-parts](https://github.com/hercules-ci/flake-parts). This setup is 🔥 reproducible, portable, and *a little bit magical*.
 
 ## ✨ Features
