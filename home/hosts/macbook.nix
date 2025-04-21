@@ -1,7 +1,10 @@
 { config, pkgs, username, homeDirectory, hostname, ... }:
 
+let
+  cliK8s = import ../../modules/cli-k8s.nix { inherit pkgs; };
+in
 {
-  home.packages = with pkgs; [
+  home.packages = with pkgs; cliCore ++ uiCore ++ cliK8s ++ [
     # Productivity
     rectangle # window snapping
     alt-tab # alt-tab switcher like on Windows

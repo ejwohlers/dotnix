@@ -1,10 +1,14 @@
 { config, pkgs, username, homeDirectory, hostname, ... }:
 
+let
+  cliK8s = import ../../modules/cli-k8s.nix { inherit pkgs; };
+in
+
 {
-  # Example: host-specific extra packages
-  home.packages = with pkgs; [
-    # Add Surface-specific tools if needed
-  ];
+
+  imports = [ ./gnome.nix ];
+
+  home.packages = with pkgs; cliCore ++ uiCore ++ cliK8s;
 
   # You can even use the hostname in logic:
   xdg.userDirs.enable = true;

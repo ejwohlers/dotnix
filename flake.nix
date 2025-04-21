@@ -20,8 +20,15 @@
           vscodeShell = import ./modules/devshells/vscode.nix { inherit pkgs; };
           neovimApp = import ./modules/apps/neovim.nix { inherit pkgs; };
           cliCorePkgs = import ./modules/cli-core.nix { inherit pkgs; };
+          checksLib = import ./lib/checks.nix {
+            inherit inputs nixpkgs system;
+            inherit cliCorePkgs;
+          };
+
         in
         {
+          checks = checksLib;
+
           devShells = {
             default = pkgs.mkShell {
               packages = cliCorePkgs ++ (with pkgs; [
@@ -46,48 +53,6 @@
           };
 
           formatter = pkgs.nixpkgs-fmt;
-
-          checks = {
-            flake-check = pkgs.writeShellApplication {
-              name = "flake-check";
-              runtimeInputs = [ pkgs.nix ];
-              text = ''
-                nix flake check
-              '';
-            };
-
-            fmt = pkgs.writeShellApplication {
-              name = "fmt-check";
-              runtimeInputs = [ pkgs.nixpkgs-fmt ];
-              text = ''
-                nixpkgs-fmt --check .
-              '';
-            };
-
-            pre-commit = pkgs.writeShellApplication {
-              name = "pre-commit-check";
-              runtimeInputs = cliCorePkgs ++ [ pkgs.pre-commit ];
-              text = ''
-                pre-commit run --all-files
-              '';
-            };
-
-            home-self = (
-              inputs.home-manager.lib.homeManagerConfiguration {
-                pkgs = import nixpkgs { inherit system; };
-                modules = [
-                  ./home/common.nix
-                  ./home/hosts/default.nix
-                ];
-                extraSpecialArgs = {
-                  username = "nixos";
-                  homeDirectory = "/home/nixos";
-                  hostname = "default";
-                };
-              }
-            ).activationPackage;
-
-          };
         };
 
 
