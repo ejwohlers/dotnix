@@ -6,7 +6,9 @@ echo "🧪 Welcome to the dotfiles bootstrap wizard"
 echo "🌍 Hostname: $(hostname)"
 echo "👤 User: $USER"
 echo "🏠 Home: $HOME"
-echo "🖥️ Hostname: $(hostname)"
+SYSTEM=$(nix eval --impure --expr builtins.currentSystem --raw)
+HOSTNAME=$(hostname)
+
 echo "🧬 System: $SYSTEM"
 
 # 1. Install Nix if it's not already installed
@@ -33,17 +35,19 @@ fi
 
 cd ~/.dotfiles
 
-# 4. Run Home Manager via flake
-echo "🚀 Activating home configuration..."
+# 4. Check if we’re on a Mac and if nix-darwin is configured
+if [[ "$OSTYPE" == "darwin"* ]] && nix eval .#darwinConfigurations.${HOSTNAME}.system &>/dev/null; then
+  echo "🍏 Detected macOS — running darwin-rebuild"
+  nix run nix-darwin -- switch --flake ".#${HOSTNAME}"
+else
+  echo "🐧 Detected Linux — running home-manager"
+  nix run .#homeConfigurations.self.activationPackage \
+    --no-write-lock-file \
+    --impure \
+    --system "$SYSTEM"
+fi
 
-SYSTEM=$(nix eval --impure --expr builtins.currentSystem --raw)
-
-nix run .#homeConfigurations.self.activationPackage \
-  --no-write-lock-file \
-  --impure \
-  --system "$SYSTEM"
-
-echo "🚀 Activating home configuration..."
+echo "🚀 Finalizing with activate.sh..."
 ./activate.sh
 
 echo "✅ All done! Your system is now configured 🎉"

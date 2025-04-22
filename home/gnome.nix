@@ -1,13 +1,6 @@
 { config, pkgs, ... }:
 
 {
-  programs.gnome.enable = true;
-
-  programs.gnome.extensions = [
-    "user-theme@gnome-shell-extensions.gcampax.github.com"
-    "dash-to-dock@micxgx.gmail.com"
-  ];
-
   gtk = {
     enable = true;
     theme.name = "Adwaita-dark";
@@ -37,8 +30,8 @@
   };
 
   home.packages = with pkgs; [
-    gnome.gnome-tweaks
-    gnome.gnome-shell-extensions
+    gnome-tweaks
+    gnome-shell-extensions
     papirus-icon-theme
     fira
   ];

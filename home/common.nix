@@ -10,26 +10,22 @@ in
 {
   home = {
     inherit username homeDirectory;
-    stateVersion = "23.11";
-  };
+    stateVersion = "24.05";
 
-  home.packages = cliCore ++ uiCore ++ (with pkgs; [
-    # Optional: project- or host-specific tools here
-    lazygit
-    gh
-    luarocks
-    lua5_1
-    gcc
-    tree-sitter
-    nodejs
-  ]);
+    packages = cliCore ++ uiCore ++ (with pkgs; [
+      # Optional: project- or host-specific tools here
+      lazygit
+      gh
+      luarocks
+      lua5_1
+      gcc
+      tree-sitter
+      nodejs
+    ]);
+  };
 
   programs = {
     home-manager.enable = true;
   };
-}
 
-# Merge reusable program configs
-// starship
-// zsh
-  // tmux
+}

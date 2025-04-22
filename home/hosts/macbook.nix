@@ -1,32 +1,29 @@
-{ config, pkgs, username, homeDirectory, hostname, ... }:
+{ config, pkgs, username, homeDirectory, hostname, cliCore, uiCore, cliK8s, ... }:
 
 let
+  lib = pkgs.lib;
   cliK8s = import ../../modules/cli-k8s.nix { inherit pkgs; };
-in
-{
-  home.packages = with pkgs; cliCore ++ uiCore ++ cliK8s ++ [
-    # Productivity
-    rectangle # window snapping
-    alt-tab # alt-tab switcher like on Windows
-    stats # menu bar stats app
-    monitorcontrol # control external display brightness
 
-    # Dev
-    iterm2
-    visual-studio-code
-    raycast
-    docker
-
-    # CLI extras
-    neofetch
-    htop
+  macApps = lib.optionals pkgs.stdenv.isDarwin [
+    pkgs.iterm2
+    pkgs.vscode
+    pkgs.docker
   ];
 
-  # 🧠 Add Mac-specific config if needed
-  home.sessionVariables = {
-    EDITOR = "nvim";
+  cliExtras = [
+    pkgs.neofetch
+    pkgs.htop
+  ];
+in
+{
+  home = {
+    inherit username homeDirectory;
+    stateVersion = "24.05";
+
+    sessionVariables = {
+      EDITOR = "nvim";
+    };
   };
 
-  # Example: add login shell override
   programs.zsh.enable = true;
 }
