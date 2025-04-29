@@ -41,109 +41,106 @@
 
       darwinPkgs = import nixpkgs { system = darwinSystem; };
 
+      # Create the darwin configuration for the host
+      mkDarwinConfig = hostName: darwin.lib.darwinSystem {
+        system = darwinSystem;
+        modules = [
+          ./modules/homebrew.nix
+          ./modules/macos.nix
+          home-manager.darwinModules.home-manager
+
+          {
+            nixpkgs.hostPlatform = darwinSystem;
+
+            users.users.${darwinUser} = {
+              home = "/Users/${darwinUser}";
+              shell = darwinPkgs.zsh;
+            };
+
+            home-manager = {
+              useGlobalPkgs = true;
+              useUserPackages = true;
+
+              extraSpecialArgs = {
+                username = darwinUser;
+                homeDirectory = "/Users/${darwinUser}";
+                hostname = hostName;
+
+                cliCore = import ./modules/cli-core.nix { pkgs = darwinPkgs; };
+                uiCore = import ./modules/ui-core.nix { pkgs = darwinPkgs; };
+                cliK8s = import ./modules/cli-k8s.nix { pkgs = darwinPkgs; };
+              };
+
+              users.${darwinUser} = {
+                imports = [
+                  ./home/common.nix
+                  (
+                    let
+                      hostModulePath = ./home/hosts/${hostName}.nix;
+                    in
+                    if pathExists hostModulePath then hostModulePath else ./home/hosts/default.nix
+                  )
+                ];
+              };
+            };
+          }
+        ];
+      };
 
     in
+    flake-parts.lib.mkFlake { inherit inputs; } {
 
-    flake-parts.lib.mkFlake
-      {
-        inherit inputs;
-      }
-      {
+      systems = [ linuxSystem darwinSystem ];
 
-        systems = [ linuxSystem darwinSystem ];
+      perSystem = { system, pkgs, config, inputs', ... }: {
+        devShells.default = pkgs.mkShell {
+          packages = (import ./modules/cli-core.nix { inherit pkgs; }) ++ [
+            pkgs.pre-commit
+            pkgs.statix
+            pkgs.deadnix
+            pkgs.nixpkgs-fmt
+          ];
+        };
 
-        perSystem = { system, pkgs, config, inputs', ... }:
-          let
+        devShells.vscode = (import ./modules/devshells/vscode.nix { inherit pkgs; }).vscode;
 
-            vscodeShell = import ./modules/devshells/vscode.nix { inherit pkgs; };
-            neovimApp = import ./modules/apps/neovim.nix { inherit pkgs; };
-            cliCorePkgs = import ./modules/cli-core.nix { inherit pkgs; };
-          in
-          {
+        apps = {
+          inherit ((import ./modules/apps/neovim.nix { inherit pkgs; })) neovim;
 
-            devShells.default = pkgs.mkShell {
-              packages = cliCorePkgs ++ [
-                pkgs.pre-commit
-                pkgs.statix
-                pkgs.deadnix
-                pkgs.nixpkgs-fmt
-              ];
-            };
-
-            devShells.vscode = vscodeShell.vscode;
-
-            apps = {
-              inherit (neovimApp) neovim;
-
-              fmt = {
-                type = "app";
-                program = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";
-                meta.description = "Format Nix files using nixpkgs-fmt";
-              };
-            };
-
-            formatter = pkgs.nixpkgs-fmt;
+          fmt = {
+            type = "app";
+            program = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";
+            meta.description = "Format Nix files using nixpkgs-fmt";
           };
+        };
 
-        flake = {
-          homeConfigurations = {
-            self = home-manager.lib.homeManagerConfiguration {
-              pkgs = import nixpkgs { system = linuxSystem; };
-              modules = [
-                ./home/common.nix
-                ./home/pre-commit.nix
-                (
-                  let
-                    hostModulePath = ./home/hosts/${linuxHost}.nix;
-                  in
-                  if pathExists hostModulePath then hostModulePath else ./home/hosts/default.nix
-                )
-              ];
-              extraSpecialArgs = {
-                username = linuxUser;
-                homeDirectory = linuxHome;
-                hostname = linuxHost;
-              };
-            };
-          };
+        formatter = pkgs.nixpkgs-fmt;
+      };
 
-          darwinConfigurations.${darwinHost} = darwin.lib.darwinSystem {
-            system = darwinSystem;
-            modules = [
-              ./home/common.nix
-              (
-                let
-                  hostModulePath = ./home/hosts/${darwinHost}.nix;
-                in
-                if pathExists hostModulePath then hostModulePath else ./home/hosts/default.nix
-              )
-              ./modules/homebrew.nix
-              ./modules/macos.nix
-              home-manager.darwinModules.home-manager
+      # Put specialized outputs in the flake attribute
+      flake = {
+        # Darwin configurations
+        darwinConfigurations.${darwinHost} = mkDarwinConfig darwinHost;
 
-              {
-                nixpkgs.hostPlatform = darwinSystem;
-
-                users.users.${darwinUser} = {
-                  home = "/Users/${darwinUser}";
-                  shell = darwinPkgs.zsh;
-                };
-
-                home-manager.extraSpecialArgs = {
-                  useGlobalPkgs = true;
-                  useUserPackages = true;
-
-                  username = darwinUser;
-                  homeDirectory = "/Users/${darwinUser}";
-                  hostname = darwinHost;
-
-                  cliCore = import ./modules/cli-core.nix { pkgs = darwinPkgs; };
-                  uiCore = import ./modules/ui-core.nix { pkgs = darwinPkgs; };
-                  cliK8s = import ./modules/cli-k8s.nix { pkgs = darwinPkgs; };
-                };
-              }
-            ];
+        # Home manager configurations
+        homeConfigurations.self = home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs { system = linuxSystem; };
+          modules = [
+            ./home/common.nix
+            ./home/pre-commit.nix
+            (
+              let
+                hostModulePath = ./home/hosts/${linuxHost}.nix;
+              in
+              if pathExists hostModulePath then hostModulePath else ./home/hosts/default.nix
+            )
+          ];
+          extraSpecialArgs = {
+            username = linuxUser;
+            homeDirectory = linuxHome;
+            hostname = linuxHost;
           };
         };
       };
+    };
 }
