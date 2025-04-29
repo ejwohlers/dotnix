@@ -36,7 +36,7 @@ fi
 cd ~/.dotfiles
 
 # 4. Check if we’re on a Mac and if nix-darwin is configured
-if [[ "$OSTYPE" == "darwin"* ]] && nix eval .#darwinConfigurations.${HOSTNAME}.system &>/dev/null; then
+if [[ "$OSTYPE" == "darwin"* ]]; then
   echo "🍏 Detected macOS — running darwin-rebuild"
   nix run github:lnl7/nix-darwin -- switch --flake ".#${HOSTNAME}"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
