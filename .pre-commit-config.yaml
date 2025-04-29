@@ -3,18 +3,35 @@ repos:
     hooks:
       - id: nixpkgs-fmt
         name: nixpkgs-fmt
+        description: Format nix files
         entry: nixpkgs-fmt
         language: system
-        types: [nix]
+        files: \.nix$
+        pass_filenames: true
 
       - id: statix
         name: statix
-        entry: bash -c 'for file in "$@"; do statix check "$file"; done' --
+        description: Lint nix files
+        entry: statix check
         language: system
-        types: [nix]
+        files: \.nix$
+        pass_filenames: false
 
       - id: deadnix
         name: deadnix
+        description: Find dead code in nix files
         entry: deadnix
         language: system
-        types: [nix]
+        files: \.nix$
+        pass_filenames: true
+
+  # Only run home-manager in post-commit to avoid the error during pre-commit
+  - repo: local
+    hooks:
+      - id: home-manager-path
+        name: home-manager-path
+        description: Update home-manager environment
+        entry: home-manager switch --flake .#self
+        language: system
+        stages: [post-commit]
+        pass_filenames: false
