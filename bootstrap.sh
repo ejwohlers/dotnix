@@ -36,9 +36,9 @@ fi
 cd ~/.dotfiles
 
 # 4. Check if we’re on a Mac and if nix-darwin is configured
-if [[ "$OSTYPE" == "darwin"* ]]; then
+if [[ "$OSTYPE" == "darwin"* ]] && nix eval --impure .#darwinConfigurations.${HOSTNAME}.system &>/dev/null; then
   echo "🍏 Detected macOS — running darwin-rebuild"
-  nix run github:lnl7/nix-darwin -- switch --flake ".#${HOSTNAME}"
+  nix run github:lnl7/nix-darwin -- switch --impure --flake ".#${HOSTNAME}"
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo "🐧 Detected Linux — running home-manager"
   nix run .#homeConfigurations.self.activationPackage \

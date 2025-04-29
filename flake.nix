@@ -27,9 +27,19 @@
       # macOS
       darwinSystem = "aarch64-darwin";
       darwinUser = if getEnv "USER" != "" then getEnv "USER" else "eduardo_wohlers";
-      darwinHost = if getEnv "HOSTNAME" != "" then getEnv "HOSTNAME" else "macbook";
-      darwinPkgs = import nixpkgs { system = darwinSystem; };
 
+      darwinHost =
+        let
+          fallback = "macbook";
+          hostnameFile = "/etc/hostname";
+        in
+        if getEnv "HOSTNAME" != "" then getEnv "HOSTNAME"
+        else if pathExists hostnameFile then
+          builtins.readFile hostnameFile
+        else
+          fallback;
+
+      darwinPkgs = import nixpkgs { system = darwinSystem; };
 
 
     in
