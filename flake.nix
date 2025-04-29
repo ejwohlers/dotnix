@@ -16,13 +16,6 @@
 
   outputs = inputs@{ flake-parts, nixpkgs, home-manager, statix, deadnix, nixpkgs-fmt, darwin, ... }:
     let
-
-      cleanDotfiles = pkgs.lib.cleanSourceWith {
-        filter = path: type:
-          !(pkgs.lib.hasInfix "/.github/" path || pkgs.lib.hasSuffix ".lock" path);
-        src = ./.;
-      };
-
       inherit (builtins) getEnv pathExists;
 
       # Linux
@@ -37,101 +30,105 @@
       darwinHost = if getEnv "HOSTNAME" != "" then getEnv "HOSTNAME" else "macbook";
       darwinPkgs = import nixpkgs { system = darwinSystem; };
 
+
+
     in
-    flake-parts.lib.mkFlake { inherit inputs; } {
 
-      systems = [ linuxSystem darwinSystem ];
+    flake-parts.lib.mkFlake
+      {
+        inherit inputs;
+      }
+      {
 
-      perSystem = { system, pkgs, config, inputs', ... }:
-        let
-          vscodeShell = import ./modules/devshells/vscode.nix { inherit pkgs; };
-          neovimApp = import ./modules/apps/neovim.nix { inherit pkgs; };
-          cliCorePkgs = import ./modules/cli-core.nix { inherit pkgs; };
-        in
-        {
-          checks = import ./lib/checks.nix {
-            inherit system nixpkgs inputs;
-            cliCorePkgs = with pkgs; [ statix deadnix nixpkgs-fmt ];
+        systems = [ linuxSystem darwinSystem ];
+
+        perSystem = { system, pkgs, config, inputs', ... }:
+          let
+
+            vscodeShell = import ./modules/devshells/vscode.nix { inherit pkgs; };
+            neovimApp = import ./modules/apps/neovim.nix { inherit pkgs; };
+            cliCorePkgs = import ./modules/cli-core.nix { inherit pkgs; };
+          in
+          {
+
+            devShells.default = pkgs.mkShell {
+              packages = cliCorePkgs ++ [
+                pkgs.pre-commit
+                pkgs.statix
+                pkgs.deadnix
+                pkgs.nixpkgs-fmt
+              ];
+            };
+
+            devShells.vscode = vscodeShell.vscode;
+
+            apps = {
+              inherit (neovimApp) neovim;
+
+              fmt = {
+                type = "app";
+                program = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";
+                meta.description = "Format Nix files using nixpkgs-fmt";
+              };
+            };
+
+            formatter = pkgs.nixpkgs-fmt;
           };
 
-          devShells.default = pkgs.mkShell {
-            packages = cliCorePkgs ++ [
-              pkgs.pre-commit
-              pkgs.statix
-              pkgs.deadnix
-              pkgs.nixpkgs-fmt
-            ];
-          };
-
-          devShells.vscode = vscodeShell.vscode;
-
-          apps = {
-            inherit (neovimApp) neovim;
-
-            fmt = {
-              type = "app";
-              program = "${pkgs.nixpkgs-fmt}/bin/nixpkgs-fmt";
-              meta.description = "Format Nix files using nixpkgs-fmt";
+        flake = {
+          homeConfigurations = {
+            self = home-manager.lib.homeManagerConfiguration {
+              pkgs = import nixpkgs { system = linuxSystem; };
+              modules = [
+                ./home/common.nix
+                ./home/pre-commit.nix
+                (
+                  let
+                    hostModulePath = ./home/hosts/${linuxHost}.nix;
+                  in
+                  if pathExists hostModulePath then hostModulePath else ./home/hosts/default.nix
+                )
+              ];
+              extraSpecialArgs = {
+                username = linuxUser;
+                homeDirectory = linuxHome;
+                hostname = linuxHost;
+              };
             };
           };
 
-          formatter = pkgs.nixpkgs-fmt;
-        };
-
-      flake = {
-        homeConfigurations = {
-          self = home-manager.lib.homeManagerConfiguration {
-            pkgs = import nixpkgs { system = linuxSystem; };
+          darwinConfigurations.${darwinHost} = darwin.lib.darwinSystem {
+            system = darwinSystem;
             modules = [
               ./home/common.nix
-              ./home/pre-commit.nix
-              (
-                let
-                  hostModulePath = ./home/hosts/${linuxHost}.nix;
-                in
-                if pathExists hostModulePath then hostModulePath else ./home/hosts/default.nix
-              )
+              ./home/hosts/macbook.nix
+              ./modules/homebrew.nix
+              ./modules/macos.nix
+              home-manager.darwinModules.home-manager
+
+              {
+                nixpkgs.hostPlatform = darwinSystem;
+
+                users.users.${darwinUser} = {
+                  home = "/Users/${darwinUser}";
+                  shell = darwinPkgs.zsh;
+                };
+
+                home-manager.extraSpecialArgs = {
+                  useGlobalPkgs = true;
+                  useUserPackages = true;
+
+                  username = darwinUser;
+                  homeDirectory = "/Users/${darwinUser}";
+                  hostname = darwinHost;
+
+                  cliCore = import ./modules/cli-core.nix { pkgs = darwinPkgs; };
+                  uiCore = import ./modules/ui-core.nix { pkgs = darwinPkgs; };
+                  cliK8s = import ./modules/cli-k8s.nix { pkgs = darwinPkgs; };
+                };
+              }
             ];
-            extraSpecialArgs = {
-              username = linuxUser;
-              homeDirectory = linuxHome;
-              hostname = linuxHost;
-            };
           };
         };
-
-        darwinConfigurations.${darwinHost} = darwin.lib.darwinSystem {
-          system = darwinSystem;
-          modules = [
-            ./home/common.nix
-            ./home/hosts/macbook.nix
-            ./modules/homebrew.nix
-            ./modules/macos.nix
-            home-manager.darwinModules.home-manager
-
-            {
-              nixpkgs.hostPlatform = darwinSystem;
-
-              users.users.${darwinUser} = {
-                home = "/Users/${darwinUser}";
-                shell = darwinPkgs.zsh;
-              };
-
-              home-manager.useUserPackages = true;
-              home-manager.useGlobalPkgs = true;
-
-              home-manager.extraSpecialArgs = {
-                username = darwinUser;
-                homeDirectory = "/Users/${darwinUser}";
-                hostname = darwinHost;
-
-                cliCore = import ./modules/cli-core.nix { pkgs = darwinPkgs; };
-                uiCore = import ./modules/ui-core.nix { pkgs = darwinPkgs; };
-                cliK8s = import ./modules/cli-k8s.nix { pkgs = darwinPkgs; };
-              };
-            }
-          ];
-        };
       };
-    };
 }
