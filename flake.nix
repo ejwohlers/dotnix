@@ -28,16 +28,47 @@
       darwinSystem = "aarch64-darwin";
       darwinUser = if getEnv "USER" != "" then getEnv "USER" else "eduardo_wohlers";
 
-      darwinHost =
+      # More reliable way to get hostname in Nix
+      getDarwinHostname =
         let
+          # Try to read from various system files that might contain hostname info
+          hostnameFiles = [
+            "/etc/hostname"
+            "/proc/sys/kernel/hostname"
+            "/etc/nixos/hostname"
+          ];
+
+          # Try to read a file, return empty string if it doesn't exist
+          safeReadFile = file:
+            if pathExists file
+            then builtins.replaceStrings [ "\n" ] [ "" ] (builtins.readFile file)
+            else "";
+
+          # Try each hostname file
+          hostnameFromFiles = builtins.foldl'
+            (acc: file:
+              if acc != "" then acc else safeReadFile file
+            ) ""
+            hostnameFiles;
+
+          # Default fallback
           fallback = "macbook";
-          hostnameFile = "/etc/hostname";
         in
-        if getEnv "HOSTNAME" != "" then getEnv "HOSTNAME"
-        else if pathExists hostnameFile then
-          builtins.readFile hostnameFile
+        if getEnv "DARWIN_HOST" != "" then
+        # Explicit override with environment variable
+          getEnv "DARWIN_HOST"
+        else if getEnv "HOSTNAME" != "" then
+        # Try HOSTNAME env var
+          getEnv "HOSTNAME"
+        else if hostnameFromFiles != "" then
+        # Try reading from files
+          hostnameFromFiles
         else
+        # Final fallback
           fallback;
+
+      # Get the current hostname
+      darwinHost = getDarwinHostname;
 
       darwinPkgs = import nixpkgs { system = darwinSystem; };
 
@@ -120,7 +151,14 @@
       # Put specialized outputs in the flake attribute
       flake = {
         # Darwin configurations
-        darwinConfigurations.${darwinHost} = mkDarwinConfig darwinHost;
+        darwinConfigurations = {
+          # Create a configuration for the current hostname
+          ${darwinHost} = mkDarwinConfig darwinHost;
+
+          # Add a "current" alias that always points to the current machine
+          # This lets you use a consistent name regardless of the actual hostname
+          "current" = mkDarwinConfig darwinHost;
+        };
 
         # Home manager configurations
         homeConfigurations.self = home-manager.lib.homeManagerConfiguration {
