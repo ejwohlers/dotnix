@@ -101,7 +101,12 @@
             system = darwinSystem;
             modules = [
               ./home/common.nix
-              ./home/hosts/macbook.nix
+              (
+                let
+                  hostModulePath = ./home/hosts/${darwinHost}.nix;
+                in
+                if pathExists hostModulePath then hostModulePath else ./home/hosts/default.nix
+              )
               ./modules/homebrew.nix
               ./modules/macos.nix
               home-manager.darwinModules.home-manager
