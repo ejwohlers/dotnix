@@ -39,12 +39,15 @@ cd ~/.dotfiles
 if [[ "$OSTYPE" == "darwin"* ]] && nix eval .#darwinConfigurations.${HOSTNAME}.system &>/dev/null; then
   echo "🍏 Detected macOS — running darwin-rebuild"
   nix run github:lnl7/nix-darwin -- switch --flake ".#${HOSTNAME}"
-else
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo "🐧 Detected Linux — running home-manager"
   nix run .#homeConfigurations.self.activationPackage \
     --no-write-lock-file \
     --impure \
     --system "$SYSTEM"
+else
+  echo "⚠️  Unsupported system: $OSTYPE"
+  exit 1
 fi
 
 echo "🚀 Finalizing with activate.sh..."
